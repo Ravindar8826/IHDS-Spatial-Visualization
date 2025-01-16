@@ -1,1 +1,228 @@
+```use "36151-0002-Data.dta", clear
 
+* Prepare the data
+rename TR4A Practice_Untouchability
+		 
+* First, let's count total responses and "Yes" responses by district
+collapse (count) total_responses=Practice_Untouchability ///
+        (sum) practicing_untouchability=Practice_Untouchability, by(DISTRICT)
+
+* Calculate percentage
+generate untouchability_pct = (practicing_untouchability/total_responses) * 100
+
+* Format for display
+format untouchability_pct %9.2f
+format total_responses %12.0fc
+format practicing_untouchability %12.0fc
+
+* Sort by percentage
+gsort -untouchability_pct
+
+* Create categories matching the legend
+gen untouchability_cat = .
+replace untouchability_cat = 1 if untouchability_pct == 0
+replace untouchability_cat = 2 if untouchability_pct > 0 & untouchability_pct < 5
+replace untouchability_cat = 3 if untouchability_pct >= 5 & untouchability_pct < 10
+replace untouchability_cat = 4 if untouchability_pct >= 10 & untouchability_pct < 20
+replace untouchability_cat = 5 if untouchability_pct >= 20 & untouchability_pct < 30
+replace untouchability_cat = 6 if untouchability_pct >= 30 & untouchability_pct < 40
+replace untouchability_cat = 7 if untouchability_pct >= 40 & untouchability_pct < 50
+replace untouchability_cat = 8 if untouchability_pct >= 50
+* Important: Set missing values to 9 explicitly
+replace untouchability_cat = 9 if untouchability_cat == .
+
+* Process district names and merge
+decode DISTRICT, generate(district_name)
+drop DISTRICT
+rename district_name DISTRICT
+save IHDS_collapse.dta, replace
+
+use india_districts_db.dta, clear
+merge m:m DISTRICT using IHDS_collapse.dta
+drop _merge
+
+* Important: Ensure missing values are properly coded as 9
+replace untouchability_cat = 9 if missing(untouchability_cat)
+
+
+* Label categories
+label define cat_labs 1 "0%" 2 "<5%" 3 "5%-10%" 4 "10%-20%" ///
+                      5 "20%-30%" 6 "30%-40%" 7 "40%-50%" ///
+                      8 "Over 50%" 9 "No data" 
+label values untouchability_cat cat_labs
+
+
+spmap untouchability_cat using india_districts_coords.dta, ///
+    id(_ID) ///
+    clmethod(unique) ///
+    fcolor(white ///                    /* 0% */ ///
+           "255 235 225" ///            /* <5% */ ///
+           "255 215 200" ///            /* 5%-10% */ ///
+           "255 185 165" ///            /* 10%-20% */ ///
+           "255 145 125" ///            /* 20%-30% */ ///
+           "255 95 75" ///              /* 30%-40% */ ///
+           "230 45 25" ///              /* 40%-50% */ ///
+           "180 0 0" ///                /* Over 50% */ ///
+           "240 240 240" ///            /* No data */ ///
+    ) ///
+    ocolor(none) /// Remove district boundaries
+    title("District-wise Map of the Share of Households Practicing Untouchability", size(*0.6)) ///
+    polygon(data(india_states_coords.dta) ocolor(black) osize(thin)) /// Add thin black state boundaries
+    note("*The darker colour indicates that over 50% of households practise untouchability.")
+		 
+		 
+		 
+*-------------------------------------------------------------------------------*
+
+
+use "36151-0002-Data.dta", clear
+
+* Prepare the data
+rename TR4B SC_Kitchen_sharing
+		 
+* First, let's count total responses and "Yes" responses by district
+collapse (count) total_responses=SC_Kitchen_sharing ///
+        (sum) Kitchen_sharing=SC_Kitchen_sharing, by(DISTRICT)
+
+* Calculate percentage
+generate untouchability_pct = (Kitchen_sharing/total_responses) * 100
+
+* Format for display
+format untouchability_pct %9.2f
+format total_responses %12.0fc
+format Kitchen_sharing %12.0fc
+
+* Sort by percentage
+gsort -untouchability_pct
+
+* Create categories matching the legend
+gen untouchability_cat = .
+replace untouchability_cat = 1 if untouchability_pct == 0
+replace untouchability_cat = 2 if untouchability_pct > 0 & untouchability_pct < 5
+replace untouchability_cat = 3 if untouchability_pct >= 5 & untouchability_pct < 10
+replace untouchability_cat = 4 if untouchability_pct >= 10 & untouchability_pct < 20
+replace untouchability_cat = 5 if untouchability_pct >= 20 & untouchability_pct < 30
+replace untouchability_cat = 6 if untouchability_pct >= 30 & untouchability_pct < 40
+replace untouchability_cat = 7 if untouchability_pct >= 40 & untouchability_pct < 50
+replace untouchability_cat = 8 if untouchability_pct >= 50
+* Important: Set missing values to 9 explicitly
+replace untouchability_cat = 9 if untouchability_cat == .
+
+
+* Process district names and merge
+decode DISTRICT, generate(district_name)
+drop DISTRICT
+rename district_name DISTRICT
+save IHDS_collapse.dta, replace
+
+use india_districts_db.dta, clear
+merge m:m DISTRICT using IHDS_collapse.dta
+drop _merge
+
+* Important: Ensure missing values are properly coded as 9
+replace untouchability_cat = 9 if missing(untouchability_cat)
+
+
+* Label categories
+label define cat_labs 1 "0%" 2 "<5%" 3 "5%-10%" 4 "10%-20%" ///
+                      5 "20%-30%" 6 "30%-40%" 7 "40%-50%" ///
+                      8 "Over 50%" 9 "No data" 
+label values untouchability_cat cat_labs
+
+save india_districts_merged.dta, replace
+
+spmap untouchability_cat using india_districts_coords.dta, ///
+    id(_ID) ///
+    clmethod(unique) ///
+    fcolor(white ///                    /* 0% */ ///
+           "255 235 225" ///            /* <5% */ ///
+           "255 215 200" ///            /* 5%-10% */ ///
+           "255 185 165" ///            /* 10%-20% */ ///
+           "255 145 125" ///            /* 20%-30% */ ///
+           "255 95 75" ///              /* 30%-40% */ ///
+           "230 45 25" ///              /* 40%-50% */ ///
+           "180 0 0" ///                /* Over 50% */ ///
+           "240 240 240" ///            /* No data */ ///
+    ) ///
+    ocolor(none) /// Remove district boundaries
+    title("District-wise Map of the Share of SC in kitchen or share utensils", size(*0.6)) ///
+    polygon(data(india_states_coords.dta) ocolor(black) osize(thin)) /// Add thin black state boundaries
+    note("*The darker colour indicates that over 50% of Problem if SC in kitchen or share utensils." ///
+)
+		 
+*--------------------------------------------------------------------------------*
+
+use "36151-0002-Data.dta", clear
+
+* Prepare the data
+rename TR4C SC_Experienced_untouchability
+		 
+* First, let's count total responses and "Yes" responses by district
+collapse (count) total_responses=SC_Experienced_untouchability ///
+        (sum) SC_Experiencing_untouchability=SC_Experienced_untouchability, by(DISTRICT)
+
+* Calculate percentage
+generate untouchability_pct = (SC_Experiencing_untouchability/total_responses) * 100
+
+* Format for display
+format untouchability_pct %9.2f
+format total_responses %12.0fc
+format SC_Experiencing_untouchability %12.0fc
+
+* Sort by percentage
+gsort -untouchability_pct
+
+* Create categories matching the legend
+gen untouchability_cat = .
+replace untouchability_cat = 1 if untouchability_pct == 0
+replace untouchability_cat = 2 if untouchability_pct > 0 & untouchability_pct < 5
+replace untouchability_cat = 3 if untouchability_pct >= 5 & untouchability_pct < 10
+replace untouchability_cat = 4 if untouchability_pct >= 10 & untouchability_pct < 20
+replace untouchability_cat = 5 if untouchability_pct >= 20 & untouchability_pct < 30
+replace untouchability_cat = 6 if untouchability_pct >= 30 & untouchability_pct < 40
+replace untouchability_cat = 7 if untouchability_pct >= 40 & untouchability_pct < 50
+replace untouchability_cat = 8 if untouchability_pct >= 50
+* Important: Set missing values to 9 explicitly
+replace untouchability_cat = 9 if untouchability_cat == .
+
+
+* Process district names and merge
+decode DISTRICT, generate(district_name)
+drop DISTRICT
+rename district_name DISTRICT
+save IHDS_collapse.dta, replace
+
+use india_districts_db.dta, clear
+merge m:m DISTRICT using IHDS_collapse.dta
+drop _merge
+
+* Important: Ensure missing values are properly coded as 9
+replace untouchability_cat = 9 if missing(untouchability_cat)
+
+
+* Label categories
+label define cat_labs 1 "0%" 2 "<5%" 3 "5%-10%" 4 "10%-20%" ///
+                      5 "20%-30%" 6 "30%-40%" 7 "40%-50%" ///
+                      8 "Over 50%" 9 "No data" 
+label values untouchability_cat cat_labs
+
+save india_districts_merged.dta, replace
+
+spmap untouchability_cat using india_districts_coords.dta, ///
+    id(_ID) ///
+    clmethod(unique) ///
+    fcolor(white ///                    /* 0% */ ///
+           "255 235 225" ///            /* <5% */ ///
+           "255 215 200" ///            /* 5%-10% */ ///
+           "255 185 165" ///            /* 10%-20% */ ///
+           "255 145 125" ///            /* 20%-30% */ ///
+           "255 95 75" ///              /* 30%-40% */ ///
+           "230 45 25" ///              /* 40%-50% */ ///
+           "180 0 0" ///                /* Over 50% */ ///
+           "240 240 240" ///            /* No data */ ///
+    ) ///
+    ocolor(none) /// Remove district boundaries
+    title("District-wise Map of the Share of Households Experienced Untouchability", size(*0.6)) ///
+    polygon(data(india_states_coords.dta) ocolor(black) osize(thin)) /// Add thin black state boundaries
+    note("*The darker colour indicates that over 50% of households experienced untouchability." ///
+)```
